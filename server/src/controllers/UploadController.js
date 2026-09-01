@@ -6,6 +6,7 @@ const Job = require('../classes/Job');
 const csvUpload = require('../middleware/csvUpload');
 const queueManager = require('../queueManagerInstance');
 const workerManager = require('../workerManagerInstance');
+const { emitJobEvent } = require('../realtime/socketHub');
 
 function normalizePriority(value) {
   if (value === undefined || value === null || String(value).trim() === '') {
@@ -83,7 +84,9 @@ class UploadController {
         priorityResult.priority
       );
 
+      emitJobEvent('job:created', job);
       queueManager.addJob(job);
+      emitJobEvent('job:waiting', job);
       workerManager.startAvailableJobs();
 
       return res.status(201).json(job.toUploadResponse());

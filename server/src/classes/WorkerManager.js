@@ -1,5 +1,6 @@
 const path = require('path');
 const { Worker } = require('worker_threads');
+const { emitJobEvent } = require('../realtime/socketHub');
 
 const MAX_CONCURRENT_JOBS = 2;
 const WORKER_TIMEOUT_MS = 30000;
@@ -38,6 +39,7 @@ class WorkerManager {
     });
 
     job.workerId = worker.threadId;
+    emitJobEvent('job:processing', job);
 
     const timeoutId = setTimeout(function () {
       this.handleTimeout(job);
@@ -66,6 +68,7 @@ class WorkerManager {
   handleWorkerMessage(job, message) {
     if (message.type === 'progress') {
       job.progress = message.progress;
+      emitJobEvent('job:progress', job);
       return;
     }
 
@@ -105,6 +108,7 @@ class WorkerManager {
     job.status = 'COMPLETED';
     job.progress = 100;
     job.result = result;
+    emitJobEvent('job:completed', job);
     this.startAvailableJobs();
   }
 
@@ -117,6 +121,7 @@ class WorkerManager {
 
     job.status = 'FAILED';
     job.error = errorMessage;
+    emitJobEvent('job:failed', job);
 
     if (shouldTerminate) {
       worker.terminate();

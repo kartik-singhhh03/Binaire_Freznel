@@ -1,0 +1,47 @@
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.summary-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.summary-label {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.summary-queued .summary-value {
+  color: #334155;
+}
+
+.summary-processing .summary-value {
+  color: #1d4ed8;
+}
+
+.summary-completed .summary-value {
+  color: #166534;
+}
+
+.summary-failed .summary-value {
+  color: #b91c1c;
+}
+
+@media (max-width: 800px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

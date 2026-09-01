@@ -1,20 +1,25 @@
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const healthRoutes = require('./routes/healthRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const queueRoutes = require('./routes/queueRoutes');
 const jobRoutes = require('./routes/jobRoutes');
+const { attachSocketServer } = require('./realtime/socketHub');
 require('./workerManagerInstance');
 
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 const uploadsDirectory = path.join(__dirname, '../uploads');
 
 if (!fs.existsSync(uploadsDirectory)) {
   fs.mkdirSync(uploadsDirectory, { recursive: true });
 }
+
+attachSocketServer(httpServer);
 
 app.use(cors());
 app.use(express.json());
@@ -24,6 +29,6 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/jobs', jobRoutes);
 
-app.listen(PORT, function () {
+httpServer.listen(PORT, function () {
   console.log('Server running on http://localhost:' + PORT);
 });

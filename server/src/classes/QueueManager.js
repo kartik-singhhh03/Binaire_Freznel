@@ -25,6 +25,16 @@ class QueueManager {
     return this.jobsById.get(jobId) || null;
   }
 
+  getAllPublicJobs() {
+    const jobs = [];
+
+    this.jobsById.forEach(function (job) {
+      jobs.push(job.toPublicStatus());
+    });
+
+    return jobs;
+  }
+
   hasJobs() {
     return this.highPriorityQueue.length > 0 || this.lowPriorityQueue.length > 0;
   }
