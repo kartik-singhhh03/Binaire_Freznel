@@ -3,8 +3,23 @@ import './CsvUpload.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+function getOrCreateClientId() {
+  const storageKey = 'csvQueueClientId';
+  const existingClientId = window.sessionStorage.getItem(storageKey);
+
+  if (existingClientId) {
+    return existingClientId;
+  }
+
+  const newClientId = crypto.randomUUID();
+  window.sessionStorage.setItem(storageKey, newClientId);
+  return newClientId;
+}
+
 function CsvUpload() {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [priority, setPriority] = useState('high');
+  const [clientId] = useState(getOrCreateClientId);
   const [isUploading, setIsUploading] = useState(false);
   const [serverResponse, setServerResponse] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -24,6 +39,8 @@ function CsvUpload() {
 
     const formData = new FormData();
     formData.append('csvFile', selectedFile);
+    formData.append('priority', priority);
+    formData.append('clientId', clientId);
 
     setIsUploading(true);
     setErrorMessage('');
@@ -52,6 +69,8 @@ function CsvUpload() {
 
   return (
     <section className="upload-card">
+      <p className="client-id">Client ID: {clientId}</p>
+
       <label className="file-label" htmlFor="csv-file">
         CSV file
       </label>
@@ -68,6 +87,22 @@ function CsvUpload() {
           Selected: {selectedFile.name} ({selectedFile.size} bytes)
         </p>
       )}
+
+      <label className="file-label" htmlFor="priority">
+        Priority
+      </label>
+      <select
+        id="priority"
+        className="priority-select"
+        value={priority}
+        onChange={function (event) {
+          setPriority(event.target.value);
+        }}
+        disabled={isUploading}
+      >
+        <option value="high">HIGH</option>
+        <option value="low">LOW</option>
+      </select>
 
       <button
         className="upload-button"
