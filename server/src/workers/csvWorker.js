@@ -1,10 +1,6 @@
 const { parentPort, workerData } = require('worker_threads');
 const fs = require('fs');
 
-// Small pause per row so progress and concurrency can be observed during testing.
-// Set this to 0 to process files as fast as possible.
-const ROW_DELAY_MS = 20;
-
 function wait(ms) {
   if (ms <= 0) {
     return;
@@ -14,7 +10,7 @@ function wait(ms) {
   while (Date.now() < endTime) {}
 }
 
-function processCsv(filePath) {
+function processCsv(filePath, rowDelayMs) {
   let content = fs.readFileSync(filePath, 'utf8');
 
   if (content.charCodeAt(0) === 0xFEFF) {
@@ -58,12 +54,12 @@ function processCsv(filePath) {
       total += value;
     }
 
-    wait(ROW_DELAY_MS);
+    wait(rowDelayMs);
 
     const progress = Math.round(((rowIndex + 1) / rows.length) * 100);
     parentPort.postMessage({
       type: 'progress',
-      progress: progress
+      progress: Math.min(100, progress)
     });
   }
 
@@ -74,7 +70,8 @@ function processCsv(filePath) {
 }
 
 try {
-  processCsv(workerData.filePath);
+  const rowDelayMs = Number(workerData.rowDelayMs);
+  processCsv(workerData.filePath, Number.isFinite(rowDelayMs) ? rowDelayMs : 20);
 } catch (error) {
   parentPort.postMessage({
     type: 'failed',

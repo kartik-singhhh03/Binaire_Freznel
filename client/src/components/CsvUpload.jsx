@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react';
 import StatusBadge from './StatusBadge.jsx';
+import API_URL from '../apiConfig.js';
 import './CsvUpload.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
-function CsvUpload({ clientId, onLocalJob }) {
+function CsvUpload({ clientId, onLocalJob, onRemoveLocalJob }) {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [priority, setPriority] = useState('high');
@@ -80,19 +79,8 @@ function CsvUpload({ clientId, onLocalJob }) {
       if (!response.ok) {
         setUploadStatus('FAILED');
         setErrorMessage(data.message || 'Upload failed.');
-        if (onLocalJob) {
-          onLocalJob({
-            jobId: 'local-upload',
-            originalFileName: selectedFile.name,
-            clientId: clientId,
-            priority: priority.toUpperCase(),
-            status: 'FAILED',
-            progress: 0,
-            workerId: null,
-            result: null,
-            error: data.message || 'Upload failed.',
-            createdAt: new Date().toISOString()
-          });
+        if (onRemoveLocalJob) {
+          onRemoveLocalJob('local-upload');
         }
         return;
       }
@@ -115,6 +103,9 @@ function CsvUpload({ clientId, onLocalJob }) {
     } catch (error) {
       setUploadStatus('FAILED');
       setErrorMessage('Could not reach the server. Make sure the backend is running.');
+      if (onRemoveLocalJob) {
+        onRemoveLocalJob('local-upload');
+      }
     } finally {
       setIsUploading(false);
     }
@@ -193,7 +184,7 @@ function CsvUpload({ clientId, onLocalJob }) {
           className="upload-button"
           type="button"
           onClick={handleUpload}
-          disabled={isUploading}
+          disabled={isUploading || !selectedFile}
         >
           {isUploading ? 'Uploading...' : 'Upload CSV'}
         </button>

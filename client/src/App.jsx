@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
+import API_URL from './apiConfig.js';
 import CsvUpload from './components/CsvUpload.jsx';
 import ConnectionStatus from './components/ConnectionStatus.jsx';
 import SummaryCards from './components/SummaryCards.jsx';
 import JobTable from './components/JobTable.jsx';
 import './App.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function getOrCreateClientId() {
   const storageKey = 'csvQueueClientId';
@@ -107,6 +106,14 @@ function App() {
     });
   }
 
+  function handleRemoveLocalJob(jobId) {
+    setJobs(function (currentJobs) {
+      return currentJobs.filter(function (job) {
+        return job.jobId !== jobId;
+      });
+    });
+  }
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -123,7 +130,11 @@ function App() {
       </header>
 
       <div className="dashboard-grid">
-        <CsvUpload clientId={clientId} onLocalJob={handleLocalJob} />
+        <CsvUpload
+          clientId={clientId}
+          onLocalJob={handleLocalJob}
+          onRemoveLocalJob={handleRemoveLocalJob}
+        />
         <SummaryCards jobs={jobs} />
         <JobTable jobs={jobs} />
       </div>

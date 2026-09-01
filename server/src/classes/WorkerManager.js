@@ -1,17 +1,17 @@
 const path = require('path');
 const { Worker } = require('worker_threads');
+const config = require('../config');
 const { emitJobEvent } = require('../realtime/socketHub');
 
-const MAX_CONCURRENT_JOBS = 2;
-const WORKER_TIMEOUT_MS = 30000;
 const CSV_WORKER_PATH = path.join(__dirname, '../workers/csvWorker.js');
 
 class WorkerManager {
   constructor(queueManager) {
     this.queueManager = queueManager;
     this.activeWorkers = new Map();
-    this.maxConcurrentJobs = MAX_CONCURRENT_JOBS;
-    this.workerTimeoutMs = WORKER_TIMEOUT_MS;
+    this.maxConcurrentJobs = config.MAX_CONCURRENT_JOBS;
+    this.workerTimeoutMs = config.WORKER_TIMEOUT_MS;
+    this.rowDelayMs = config.CSV_ROW_DELAY_MS;
   }
 
   startAvailableJobs() {
@@ -32,11 +32,22 @@ class WorkerManager {
     job.error = null;
     job.result = null;
 
-    const worker = new Worker(CSV_WORKER_PATH, {
-      workerData: {
-        filePath: job.filePath
-      }
-    });
+    let worker;
+
+    try {
+      worker = new Worker(CSV_WORKER_PATH, {
+        workerData: {
+          filePath: job.filePath,
+          rowDelayMs: this.rowDelayMs
+        }
+      });
+    } catch (error) {
+      job.status = 'FAILED';
+      job.error = 'Could not start a worker thread.';
+      emitJobEvent('job:failed', job);
+      this.startAvailableJobs();
+      return;
+    }
 
     job.workerId = worker.threadId;
     emitJobEvent('job:processing', job);
@@ -66,8 +77,16 @@ class WorkerManager {
   }
 
   handleWorkerMessage(job, message) {
+    if (job.status !== 'PROCESSING') {
+      return;
+    }
+
     if (message.type === 'progress') {
-      job.progress = message.progress;
+      const progress = Number(message.progress);
+      if (!Number.isFinite(progress)) {
+        return;
+      }
+      job.progress = Math.max(0, Math.min(100, progress));
       emitJobEvent('job:progress', job);
       return;
     }

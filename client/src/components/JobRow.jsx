@@ -18,11 +18,11 @@ function JobRow({ job }) {
   let resultLabel = '—';
 
   if (job.status === 'PROCESSING' && job.workerId !== null && job.workerId !== undefined) {
-    workerLabel = 'Worker ' + job.workerId;
-  } else if (job.workerId !== null && job.workerId !== undefined && job.status !== 'WAITING' && job.status !== 'QUEUED') {
-    workerLabel = 'Worker ' + job.workerId;
+    workerLabel = 'Worker #' + job.workerId;
+  } else if (job.workerId !== null && job.workerId !== undefined && job.status !== 'WAITING' && job.status !== 'QUEUED' && job.status !== 'UPLOADING') {
+    workerLabel = 'Worker #' + job.workerId;
   } else if (job.status === 'PROCESSING') {
-    workerLabel = 'Worker starting';
+    workerLabel = 'Starting thread';
   }
 
   if (job.status === 'COMPLETED' && job.result !== null && job.result !== undefined) {
@@ -46,7 +46,9 @@ function JobRow({ job }) {
       <td>
         <ProgressBar value={job.progress} />
       </td>
-      <td>{workerLabel}</td>
+      <td title={job.workerId !== null && job.workerId !== undefined ? 'Thread ID: ' + job.workerId : undefined}>
+        {workerLabel}
+      </td>
       <td className={job.status === 'FAILED' ? 'result-error' : ''}>{resultLabel}</td>
     </tr>
   );

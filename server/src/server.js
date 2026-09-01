@@ -3,6 +3,7 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const config = require('./config');
 const healthRoutes = require('./routes/healthRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const queueRoutes = require('./routes/queueRoutes');
@@ -12,7 +13,6 @@ require('./workerManagerInstance');
 
 const app = express();
 const httpServer = http.createServer(app);
-const PORT = process.env.PORT || 5000;
 const uploadsDirectory = path.join(__dirname, '../uploads');
 
 if (!fs.existsSync(uploadsDirectory)) {
@@ -21,7 +21,9 @@ if (!fs.existsSync(uploadsDirectory)) {
 
 attachSocketServer(httpServer);
 
-app.use(cors());
+app.use(cors({
+  origin: config.FRONTEND_ORIGINS
+}));
 app.use(express.json());
 
 app.use('/api/health', healthRoutes);
@@ -29,6 +31,6 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/jobs', jobRoutes);
 
-httpServer.listen(PORT, function () {
-  console.log('Server running on http://localhost:' + PORT);
+httpServer.listen(config.PORT, function () {
+  console.log('Server running on http://localhost:' + config.PORT);
 });

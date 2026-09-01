@@ -32,11 +32,16 @@ function normalizePriority(value) {
 }
 
 function getOrCreateClientId(value) {
-  if (value !== undefined && value !== null && String(value).trim() !== '') {
-    return String(value).trim();
+  if (value === undefined || value === null || String(value).trim() === '') {
+    return crypto.randomUUID();
   }
 
-  return crypto.randomUUID();
+  return String(value).trim().slice(0, 80);
+}
+
+function safeOriginalFileName(originalName) {
+  const baseName = path.basename(String(originalName || 'upload.csv'));
+  return baseName.slice(0, 255);
 }
 
 class UploadController {
@@ -45,9 +50,15 @@ class UploadController {
 
     uploadSingleCsv(req, res, function (error) {
       if (error) {
+        let message = error.message;
+
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          message = 'File is too large. Maximum size is 5 MB.';
+        }
+
         return res.status(400).json({
           success: false,
-          message: error.message
+          message: message
         });
       }
 
@@ -70,7 +81,7 @@ class UploadController {
 
       const fileId = path.parse(req.file.filename).name;
       const uploadedFile = new UploadedFile(
-        req.file.originalname,
+        safeOriginalFileName(req.file.originalname),
         req.file.size,
         fileId,
         req.file.filename

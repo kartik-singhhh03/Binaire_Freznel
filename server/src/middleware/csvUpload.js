@@ -1,6 +1,7 @@
 const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
+const config = require('../config');
 
 const uploadsDirectory = path.join(__dirname, '../../uploads');
 
@@ -28,7 +29,7 @@ const csvUpload = multer({
   storage: storage,
   fileFilter: csvFileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024
+    fileSize: config.MAX_UPLOAD_BYTES
   }
 });
 

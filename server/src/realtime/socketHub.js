@@ -1,4 +1,5 @@
 const { Server } = require('socket.io');
+const config = require('../config');
 const queueManager = require('../queueManagerInstance');
 
 let io = null;
@@ -6,7 +7,7 @@ let io = null;
 function attachSocketServer(httpServer) {
   io = new Server(httpServer, {
     cors: {
-      origin: ['http://localhost:5173', 'http://127.0.0.1:5173']
+      origin: config.FRONTEND_ORIGINS
     }
   });
 
