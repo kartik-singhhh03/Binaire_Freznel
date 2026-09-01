@@ -5,6 +5,7 @@ const UploadedFile = require('../classes/UploadedFile');
 const Job = require('../classes/Job');
 const csvUpload = require('../middleware/csvUpload');
 const queueManager = require('../queueManagerInstance');
+const workerManager = require('../workerManagerInstance');
 
 function normalizePriority(value) {
   if (value === undefined || value === null || String(value).trim() === '') {
@@ -83,6 +84,7 @@ class UploadController {
       );
 
       queueManager.addJob(job);
+      workerManager.startAvailableJobs();
 
       return res.status(201).json(job.toUploadResponse());
     });

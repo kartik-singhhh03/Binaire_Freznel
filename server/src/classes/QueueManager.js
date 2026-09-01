@@ -2,6 +2,7 @@ class QueueManager {
   constructor() {
     this.highPriorityQueue = [];
     this.lowPriorityQueue = [];
+    this.jobsById = new Map();
     this.consecutiveHighJobs = 0;
     // After 3 HIGH jobs in a row, take 1 LOW job so LOW jobs cannot wait forever.
     this.highJobsBeforeLow = 3;
@@ -9,6 +10,7 @@ class QueueManager {
 
   addJob(job) {
     job.status = 'QUEUED';
+    this.jobsById.set(job.jobId, job);
 
     if (job.priority === 'HIGH') {
       this.highPriorityQueue.push(job);
@@ -17,6 +19,10 @@ class QueueManager {
     }
 
     job.status = 'WAITING';
+  }
+
+  getJobById(jobId) {
+    return this.jobsById.get(jobId) || null;
   }
 
   hasJobs() {

@@ -8,6 +8,8 @@ class Job {
     this.status = 'UPLOADED';
     this.progress = 0;
     this.result = null;
+    this.error = null;
+    this.workerId = null;
     this.createdAt = new Date().toISOString();
   }
 
@@ -31,6 +33,21 @@ class Job {
       priority: this.priority,
       status: this.status,
       progress: this.progress,
+      createdAt: this.createdAt
+    };
+  }
+
+  toPublicStatus() {
+    return {
+      jobId: this.jobId,
+      originalFileName: this.originalFileName,
+      clientId: this.clientId,
+      priority: this.priority,
+      status: this.status,
+      progress: this.progress,
+      workerId: this.workerId,
+      result: this.result,
+      error: this.error,
       createdAt: this.createdAt
     };
   }
