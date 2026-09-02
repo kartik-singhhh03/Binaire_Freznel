@@ -64,7 +64,9 @@ function App() {
   const [jobs, setJobs] = useState([]);
 
   useEffect(function () {
-    const socket = io(API_URL);
+    const socket = io(API_URL, {
+      transports: ['polling', 'websocket']
+    });
 
     function handleJobEvent(payload) {
       if (!payload || !payload.job || !payload.job.jobId) {

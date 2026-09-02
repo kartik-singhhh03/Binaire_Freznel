@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: binaire-queue-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: CSV_ROW_DELAY_MS
+        value: "0"
+      - key: MAX_CONCURRENT_JOBS
+        value: "2"
+      - key: WORKER_TIMEOUT_MS
+        value: "30000"
+      - key: ALLOW_VERCEL_PREVIEWS
+        value: "true"
+      - key: FRONTEND_ORIGIN
+        sync: false

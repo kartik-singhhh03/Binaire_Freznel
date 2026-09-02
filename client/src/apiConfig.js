@@ -1,6 +1,8 @@
 function getApiUrl() {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  const configuredUrl = import.meta.env.VITE_API_URL;
+
+  if (configuredUrl) {
+    return String(configuredUrl).replace(/\/$/, '');
   }
 
   if (import.meta.env.DEV) {

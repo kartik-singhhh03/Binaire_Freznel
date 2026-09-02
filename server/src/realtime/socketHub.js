@@ -7,8 +7,10 @@ let io = null;
 function attachSocketServer(httpServer) {
   io = new Server(httpServer, {
     cors: {
-      origin: config.FRONTEND_ORIGINS
-    }
+      origin: config.corsOrigin,
+      methods: ['GET', 'POST']
+    },
+    transports: ['polling', 'websocket']
   });
 
   io.on('connection', function (socket) {

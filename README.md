@@ -346,13 +346,89 @@ Frontend:
 Not automated here: clicking the dashboard in a real browser, or opening three Chrome tabs. That should be checked locally at `http://localhost:5173`.
 
 
-## Deployment
+## Deployment (Vercel + Render)
 
-- No Docker, Redis, or database is required
-- Job state is **in memory**. A process restart empties the queue
-- `FRONTEND_ORIGIN` must include the real browser origin or Socket.IO / CORS will fail
-- `VITE_API_URL` is compiled into the frontend; rebuild after changing it
-- Do not commit `.env` files with real secrets (this project has none)
+Split the app like this:
+
+- **Render** → Node API (`server/`) — Express, uploads, workers, Socket.IO
+- **Vercel** → static React app (`client/`) — dashboard only
+
+Do **not** deploy the Express server to Vercel. Vercel is for the frontend build. Worker Threads, long-lived Socket.IO, and disk uploads need a normal Node process on Render.
+
+Deploy **Render first**, then Vercel, then put the Vercel URL back into Render CORS.
+
+### 1. Render (backend)
+
+1. Push this repo to GitHub.
+2. In [Render](https://render.com), **New → Web Service** and connect the repo.
+3. Settings:
+   - **Root Directory:** `server`
+   - **Runtime:** Node
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+   - **Health Check Path:** `/api/health`
+4. Environment variables:
+
+| Key | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `FRONTEND_ORIGIN` | your Vercel URL, e.g. `https://your-app.vercel.app` (no trailing slash) |
+| `ALLOW_VERCEL_PREVIEWS` | `true` |
+| `CSV_ROW_DELAY_MS` | `0` |
+| `MAX_CONCURRENT_JOBS` | `2` |
+| `WORKER_TIMEOUT_MS` | `30000` |
+
+Render sets `PORT` for you. Do not hard-code it.
+
+5. Deploy. Copy the service URL, for example `https://binaire-queue-api.onrender.com`.
+
+You can also use the repo `render.yaml` Blueprint. `FRONTEND_ORIGIN` is left for you to fill in after Vercel exists.
+
+If you deploy Render before Vercel exists, set `ALLOW_VERCEL_PREVIEWS=true` first, deploy Vercel, then set `FRONTEND_ORIGIN` to the production Vercel URL.
+
+### 2. Vercel (frontend)
+
+1. In [Vercel](https://vercel.com), **Add New → Project** and import the same GitHub repo.
+2. Either:
+   - leave the **Root Directory** as the repo root (uses the root `vercel.json`), or
+   - set **Root Directory** to `client` (uses `client/vercel.json`)
+3. Framework: Vite. Output: `client/dist` (or `dist` if Root Directory is `client`).
+4. Environment variable (Production and Preview):
+
+| Key | Value |
+|---|---|
+| `VITE_API_URL` | your Render URL, e.g. `https://binaire-queue-api.onrender.com` (**no trailing slash**) |
+
+5. Deploy.
+
+`VITE_API_URL` is baked in at **build** time. If the Render URL changes, update the variable and **Redeploy** the frontend.
+
+### 3. Connect the two
+
+On Render, set:
+
+```
+FRONTEND_ORIGIN=https://your-app.vercel.app
+```
+
+No trailing slash. Restart/redeploy the API if it does not pick up the change.
+
+`ALLOW_VERCEL_PREVIEWS=true` also allows `https://*.vercel.app` so Preview deployments can talk to the API.
+
+### 4. Check it
+
+- Render: `https://your-api.onrender.com/api/health` → `{"status":"ok"}`
+- Vercel: open the dashboard, header should show **Connected**
+- Upload `samples/sum21.csv` as HIGH → result `21`
+
+### Platform notes
+
+- Render **free** services sleep after idle time. The first request (and Socket.IO) may take 30–60 seconds to wake up.
+- Render disk is ephemeral unless you add a persistent disk. Uploaded CSVs and in-memory jobs are lost on restart.
+- Keep **one** Render instance. Socket.IO and the in-memory queue are not shared across multiple servers.
+- Local development is unchanged: `server` + `client` with `npm run dev`.
+
+Do not commit `.env` files with real secrets. Use the Vercel and Render dashboards.
 
 ## Limitations
 

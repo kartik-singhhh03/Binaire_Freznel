@@ -21,16 +21,24 @@ if (!fs.existsSync(uploadsDirectory)) {
 
 attachSocketServer(httpServer);
 
+app.set('trust proxy', 1);
 app.use(cors({
-  origin: config.FRONTEND_ORIGINS
+  origin: config.corsOrigin
 }));
 app.use(express.json());
+
+app.get('/', function (req, res) {
+  res.json({
+    status: 'ok',
+    service: 'binaire-queue-api'
+  });
+});
 
 app.use('/api/health', healthRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/jobs', jobRoutes);
 
-httpServer.listen(config.PORT, function () {
-  console.log('Server running on http://localhost:' + config.PORT);
+httpServer.listen(config.PORT, config.HOST, function () {
+  console.log('Server running on http://' + config.HOST + ':' + config.PORT);
 });
